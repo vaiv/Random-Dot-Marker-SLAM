@@ -33,6 +33,8 @@ struct Comparator
    }
 };
 
+
+
 class Dot
 {
     std::vector<DistComp> Neighbors;

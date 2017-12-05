@@ -14,7 +14,7 @@ Dot::Dot(cv::Vec3f Circle,cv::Mat frame,int nn_count,int selector,float thresh1,
     this->resol = resol;
     this->nn_count = nn_count;
     this->selector = selector;
-    tolerance = 0.02;
+    tolerance = 0.01;
     idx=-1;
 }
 
@@ -85,15 +85,56 @@ float Dot::computeCrossRatio(std::vector<cv::Point2f> Vertices)
         return 0;
 }
 
+//float Dot::computeCrossRatio_4Points(std::vector<cv::Point2f> Vertices)
+//{
+//    float val1 = distBw(Vertices[0],Vertices[2]);
+//    float val2 = distBw(Vertices[1],Vertices[3]);
+//    float val3 = distBw(Vertices[0],Vertices[3]);
+//    float val4 = distBw(Vertices[1],Vertices[2]);
+
+//    if(val1*val2*val3*val4 > 0)
+//        return (val1*val2)/(val3*val4);
+//    else
+//        return 0;
+//}
+
+float Magnitude(cv::Vec3f vector)
+{
+    return sqrt(pow(vector[0],2) + pow(vector[1],2) + pow(vector[2],2));
+}
+
 float Dot::computeCrossRatio_4Points(std::vector<cv::Point2f> Vertices)
 {
-    float val1 = distBw(Vertices[0],Vertices[2]);
-    float val2 = distBw(Vertices[1],Vertices[3]);
-    float val3 = distBw(Vertices[0],Vertices[3]);
-    float val4 = distBw(Vertices[1],Vertices[2]);
+    cv::Vec3f concurrent_lines[4], cross[4];
+
+    for(int i=0;i<4;i++)
+    {
+        cv::Vec3f dst;
+        cv::Point2f vtx, src;
+        vtx = Vertices[i+1];
+        src = Vertices[0];
+        dst[0] = vtx.x - src.x;
+        dst[1] = vtx.y - src.y;
+        dst[2] = 0;
+
+        concurrent_lines[i] = dst;
+        concurrent_lines[i] = dst;
+    }
+
+    cross[0] = concurrent_lines[0].cross(concurrent_lines[2]); //ac
+    cross[1] = concurrent_lines[1].cross(concurrent_lines[2]); //bc
+    cross[2] = concurrent_lines[0].cross(concurrent_lines[3]); //ad
+    cross[3] = concurrent_lines[1].cross(concurrent_lines[3]); //bd
+
+
+
+    float val1 = sin(Magnitude(cross[0])/(Magnitude(concurrent_lines[0])*Magnitude(concurrent_lines[2])));
+    float val2 = sin(Magnitude(cross[1])/(Magnitude(concurrent_lines[1])*Magnitude(concurrent_lines[2])));
+    float val3 = sin(Magnitude(cross[2])/(Magnitude(concurrent_lines[0])*Magnitude(concurrent_lines[3])));
+    float val4 = sin(Magnitude(cross[3])/(Magnitude(concurrent_lines[1])*Magnitude(concurrent_lines[3])));
 
     if(val1*val2*val3*val4 > 0)
-        return (val1*val2)/(val3*val4);
+        return (val1*val4)/(val2*val3);
     else
         return 0;
 }
@@ -101,19 +142,20 @@ float Dot::computeCrossRatio_4Points(std::vector<cv::Point2f> Vertices)
 void Dot::computeDescriptors(std::vector<DistComp> m_Neighbors)
 {
     std::vector<bool> comb(m_Neighbors.size());
-    std::fill(comb.begin(),comb.begin()+5,true);
+    std::fill(comb.begin(),comb.begin()+4,true);
     std::vector<int> curr_Desc;
+    cv::Point2f Center(Circle[0],Circle[1]);
     do
     {
         std::vector<cv::Point2f> Vertices;
-
+        Vertices.push_back(Center);
         for(int i=0;i<m_Neighbors.size();i++)
         {
             if(comb[i])
             Vertices.push_back(m_Neighbors[i].Center);
          }
 
-        float desc = computeCrossRatio(Vertices);
+        float desc = computeCrossRatio_4Points(Vertices);
         curr_Desc.push_back(desc*resol);
 
     } while(std::prev_permutation(comb.begin(),comb.end()));

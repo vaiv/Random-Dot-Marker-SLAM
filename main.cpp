@@ -3,59 +3,152 @@
 #include "detectcircles.h"
 #include "dot.h"
 #include "dotmarkers.h"
+
 using namespace cv;
+using namespace std;
+class desc_match : public ParallelLoopBody
+{
+public:
+    desc_match(std::vector<Dot>* BF_1, std::vector<Dot>* BF_2, std::vector<Dot>* Markers_1,std::vector<Dot>* Markers_2):_BF_1(BF_1),_BF_2(BF_2),_Markers_1(Markers_1),_Markers_2(Markers_2) {}
+    virtual void operator ()(const Range& range) const
+    {
+        for(int r= range.start;r<range.end;r++)
+     {   for(int j=0;j<(*_BF_2).size();j++)
+        {
+            if((*_BF_1)[r].matchDescriptors((*_BF_2)[j].getDescriptors()))
+            {
+                (*_Markers_1).push_back((*_BF_1)[r]);
+                (*_Markers_2).push_back((*_BF_2)[j]);
+                cout<<"Marker with id "<<(*_BF_1)[r].getId()<<" matched"<<endl;
 
+            }
+        }
+        }
+    }
 
-//int main(int argc, char *argv[])
+private:
+   std::vector<Dot>* _BF_1,*_BF_2,*_Markers_1,*_Markers_2;
+
+  }  ;
+
+Mat draw(cv::Mat Rot_Vec, cv::Mat Trans, cv::Mat Cam, cv::Mat DistCoeffs,cv::Mat img,std::vector<Point3f> axis,cv::VideoWriter &wcap)
+{
+    vector<cv::Point2f> imgpts;
+//    vector<cv::Point3f> axis;
+//    cv::Mat res = image.clone();
+//        axis.push_back(cv::Point3f(0.0,0.0,0.5));
+//        axis.push_back(cv::Point3f(0.2,0.0,0.5));
+//        axis.push_back(cv::Point3f(0.0,-0.2,0.5));
+//        axis.push_back(cv::Point3f(0.0,0.0,0.7));
+
+    cv::Mat res = img.clone();
+    cv::projectPoints(axis, Rot_Vec, Trans, Cam, DistCoeffs,imgpts);
+
+    vector<Point> first,last;
+    vector<vector<Point>> top,bottom,up,down,left,right;
+    for(int i=0;i<imgpts.size();i++)
+    {
+        if(i>3)
+            last.push_back(imgpts[i]);
+        else
+            first.push_back(imgpts[i]);
+    }
+     Mat cnt=Mat::zeros(cvSize(img.cols,img.rows),CV_8UC1);
+    top.push_back(first);
+    bottom.push_back(last);
+///pyramid begins
+vector<Point> F1,F2,F3,F4;
+Point vertex;
+vertex.x= (first[0].x+first[2].x)/2;
+vertex.y= (first[0].y+first[2].y)/2;
+
+F1.push_back(last[0]);
+F1.push_back(last[1]);
+F1.push_back(vertex);
+up.push_back(F1);
+
+F2.push_back(last[1]);
+F2.push_back(last[2]);
+F2.push_back(vertex);
+right.push_back(F2);
+
+F3.push_back(last[2]);
+F3.push_back(last[3]);
+F3.push_back(vertex);
+down.push_back(F3);
+
+F4.push_back(last[3]);
+F4.push_back(last[0]);
+F4.push_back(vertex);
+left.push_back(F4);
+
+drawContours(img,bottom,-1,cvScalar(0,255,0),CV_FILLED);
+drawContours(img,down,-1,cvScalar(0,0,255),CV_FILLED);
+drawContours(img,right,-1,cvScalar(255,0,0),CV_FILLED);
+drawContours(img,left,-1,cvScalar(255,255,255),CV_FILLED);
+drawContours(img,up,-1,cvScalar(125,125,0),CV_FILLED);
+
+line(img,last[0],vertex,(255),3);
+line(img,last[1],vertex,(255),3);
+line(img,last[2],vertex,(255),3);
+line(img,last[3],vertex,(255),3);
+
+//for(int i=0;i<4;i++)
 //{
-//    string source;
-//    VideoCapture reader;
-//    if(strcasecmp(argv[1],"live")==0)
-//    {
-//        std::cout<<"enter camera index"<<std::endl;
-//        int c;
-//        std::cin>>c;
-//        reader.open(c);
-//        std::cout<<"sourcing from video"<<source<<std::endl;
-//    }
-//    else
-//    reader.open(argv[1]);
+//    line(img,first[i],last[i],(255),3);
 
-//    char kb;
-//    DotMarkers Pattern;
-//    while(reader.grab() && kb!='q')
-//    {
-//        Mat frame;
-//        reader.retrieve(frame);
-//        cv::imshow("original",frame);
+//    int t= (i+1<4)?i+1:0;
+//    line(img,first[i],first[t],(255),3);
 
-//        DetectCircles detector(frame);
-//        detector.drawCircles();
-////        cv::waitKey(0);
-//        vector<Vec3f> Circles = detector.getDetectedCircles();
+//    line(img,last[i],last[t],(255),3);
 
-//        for(int i=0;i<Circles.size();i++)
-//        {   if(Circles.size()>8)
-//            {
-//               // cout<<"trying to locate markers"<<endl;
-//                Dot Marker(Circles[i],frame,8,7,0.8f,0.9f,10);
-//                Marker.setCenters(detector.getCenters());
-//                //cout<<"getting Descriptors"<<endl;
-//                Marker.assignDescriptors();
-//                if(!Pattern.find(Marker))
-//                    Pattern.insert(Marker);
-//                if(Marker.getId()>0)
-//                Marker.draw(frame);
-//                //imshow("neighbors",frame);
-//                //cv::waitKey(0);
-
-//            }
-
-//        }
-//        imshow("detected_markers",frame);
-//         kb=cv::waitKey(60);
-//    }
 //}
+/// pyramid ends
+    vector<Point> U,D,L,R,P;
+    //up face points
+    U.push_back(first[0]);
+    U.push_back(first[1]);
+    U.push_back(last[1]);
+    U.push_back(last[0]);
+    //up.push_back(U);
+
+    //down face points
+    D.push_back(first[2]);
+    D.push_back(first[3]);
+    D.push_back(last[3]);
+    D.push_back(last[2]);
+    //down.push_back(D);
+
+    //left face points
+    L.push_back(first[0]);
+    L.push_back(first[3]);
+    L.push_back(last[3]);
+    L.push_back(last[0]);
+    //left.push_back(L);
+
+    //right face points
+    R.push_back(first[1]);
+    R.push_back(first[2]);
+    R.push_back(last[2]);
+    R.push_back(last[1]);
+    //right.push_back(R);
+
+
+//    drawContours(img,top,-1,cvScalar(0,0,255),CV_FILLED);
+//    drawContours(img,up,-1,cvScalar(255,0,0),CV_FILLED);
+//    drawContours(img,down,-1,cvScalar(125,125,0),CV_FILLED);
+//    drawContours(img,left,-1,cvScalar(125,0,125),CV_FILLED);
+//    drawContours(img,right,-1,cvScalar(0,125,125),CV_FILLED);
+//    drawContours(img,bottom,-1,cvScalar(0,255,0),CV_FILLED);
+
+    //drawContours(img,top,-1,cvScalar(0,255,0));
+    imshow("AR",img);
+    wcap<<img;
+    return img;
+
+}
+
+
 
 ////Boilerplate driver code. Not to be used in final application.
 
@@ -114,16 +207,16 @@ int main(int argc,char** argv)
         else
         reader.open(argv[1]);
 
-    cv::Mat K,D; //CameraMatrix and Distortion Coefficients
-    FileStorage fs(argv[2], cv::FileStorage::READ);
-    fs["camera_matrix"] >> K;
-    fs["distortion_coefficients"] >> D;
+//    cv::Mat K,D; //CameraMatrix and Distortion Coefficients
+//    FileStorage fs(argv[2], cv::FileStorage::READ);
+//    fs["camera_matrix"] >> K;
+//    fs["distortion_coefficients"] >> D;
 
         ////K for ideal camera
-//    cv::Mat K = (Mat_<double>(3,3) <<
-//            500, 0, 1280/2,
-//            0, 500, 720/2,
-//            0, 0,    1);
+    cv::Mat K = (Mat_<double>(3,3) <<
+            500, 0, 1280/2,
+            0, 500, 720/2,
+            0, 0,    1);
 
     cv::VideoWriter  w_cap("./Augmented.avi",CV_FOURCC('M','J','P','G'),29.0,cvSize((int) reader.get(CV_CAP_PROP_FRAME_WIDTH),(int) reader.get(CV_CAP_PROP_FRAME_HEIGHT)));
 
@@ -133,22 +226,24 @@ int main(int argc,char** argv)
     std::vector<Dot> BF_2;
     bool pos3D =false, setPattern =false;
     std::vector<cv::Point3f> Axis;
+    int frame_ct=0;
+    float fin_error;
         while(reader.grab() && kb!='q')
         {
             cv::Mat dist_frame,frame;
             reader.retrieve(dist_frame);
-            cv::undistort(dist_frame,frame,K,D);
+            cv::undistort(dist_frame,frame,K,cv::Mat());
             DetectCircles detector(frame);
             detector.drawCircles();
             vector<Vec3f> Circles = detector.getDetectedCircles();
             std::vector<Dot> tmp;
             Mat Rotation_Vec,Translation_Vec;
-            if(Circles.size()>12)
+            if(Circles.size()>7)
             {
 
                 for(int i=0;i<Circles.size();i++)
                 {
-                    Dot Marker(Circles[i],frame,8,7,0.8f,0.9f,100);
+                    Dot Marker(Circles[i],frame,8,7,1.0f,0.9f,100);
                     Marker.setCenters(detector.getCenters());
                     Marker.assignDescriptors();
                     if(!Pattern.find(Marker) && !setPattern )
@@ -161,7 +256,7 @@ int main(int argc,char** argv)
                     }
 
                 }
-                if(Pattern.getMaxId()>100)
+                if(Pattern.getMaxId()>=8)
                     setPattern=true;
 
                 cv::imshow("Detected Markers",frame);
@@ -195,6 +290,9 @@ int main(int argc,char** argv)
                     else continue;
                 }
 
+                if(kb=='q' && frame_ct>0)
+                    std::cout<<"avg reprojection error for all frames is"<<fin_error/frame_ct<<std::endl;
+
             }
 
             if(BF_1.size()*BF_2.size()>0 && !pos3D)
@@ -207,6 +305,7 @@ int main(int argc,char** argv)
                 cv::Mat mask, Rot, Trans;
                 cv::Mat triangulated_Points;
                 getMatches(BF_1,BF_2,Markers_1,Markers_2);
+                //parallel_for_(Range(0,BF_1.size()),desc_match(&BF_1,&BF_2,&Markers_1,&Markers_2));
 
                 for(int i=0;i<Markers_1.size();i++)
                 {
@@ -214,7 +313,7 @@ int main(int argc,char** argv)
                     corres_2.push_back(Markers_2[i].getCenter());
                 }
 
-                if(corres_1.size()>8)
+                if(corres_1.size()>=5)
                 {
                     cv::Mat EssentialMat = cv::findEssentialMat(corres_1,corres_2,K,cv::RANSAC,0.999,1.0,mask);
                     cv::recoverPose(EssentialMat,corres_1,corres_2,K,Rot,Trans,3,mask,triangulated_Points);
@@ -243,7 +342,7 @@ int main(int argc,char** argv)
                     }
                     sum /= corres_2.size();
                     sum = sqrt(sum);
-                    cout<<"RMS reproj error is "<<sum;
+                    std::cout<<"RMS reproj error is "<<sum<<std::endl;
 
 
                     for(int j=0;j<Coords3D.size();j++)
@@ -253,11 +352,23 @@ int main(int argc,char** argv)
                             cout<<"this should not have happenend, an already located marker could not be found!"<<endl;
                     }
 
-                    cv::Point3f origin = cv::Point3f(0,0,0);
+                    cv::Point3f origin = cv::Point3f(0,0,Coords3D[0].z);
+                    //float side_length = 4.3;
                     Axis.push_back(origin);
-                    Axis.push_back(cv::Point3f(origin.x + 0.16,origin.y,origin.z));
-                    Axis.push_back(cv::Point3f(origin.x ,origin.y + 0.16,origin.z));
-                    Axis.push_back(cv::Point3f(origin.x ,origin.y,origin.z - 0.16));
+                    Axis.push_back(cv::Point3f(origin.x + 0.46,origin.y,origin.z));
+                    Axis.push_back(cv::Point3f(origin.x ,origin.y + 0.46,origin.z));
+                    Axis.push_back(cv::Point3f(origin.x ,origin.y,origin.z - 0.46));
+
+////pyramid
+//                   Axis.push_back(origin);
+//                   Axis.push_back(cv::Point3f(origin.x,origin.y+side_length,origin.z));
+//                    Axis.push_back(cv::Point3f(origin.x+side_length,origin.y+side_length,origin.z));
+//                     Axis.push_back(cv::Point3f(origin.x+side_length,origin.y,origin.z));
+
+//                      Axis.push_back(cv::Point3f(origin.x,origin.y,origin.z-side_length));
+//                      Axis.push_back(cv::Point3f(origin.x,origin.y+side_length,origin.z-side_length));
+//                       Axis.push_back(cv::Point3f(origin.x+side_length,origin.y+side_length,origin.z-side_length));
+//                        Axis.push_back(cv::Point3f(origin.x+side_length,origin.y,origin.z-side_length));
 
                     pos3D = true;
                 }
@@ -270,7 +381,6 @@ int main(int argc,char** argv)
                 std::vector<Dot> known3DMarkers;
                for(int k=0;k<tmp.size();k++)
                {
-                   cv::Point3f point3D;
                    if(Pattern.get3DPos(tmp[k].getId(),Point3D))
                    {
                        tmp[k].set3DPos(Point3D);
@@ -279,11 +389,12 @@ int main(int argc,char** argv)
 
                }
 
-               if(known3DMarkers.size()>8)
+               if(known3DMarkers.size()>5)
                {
                    std::vector<Point2f> imgPoints;
                    std::vector<Point3f> worldPoints;
 
+                    frame_ct++;
 
                    for(int k=0;k<known3DMarkers.size();k++)
                    {
@@ -296,8 +407,21 @@ int main(int argc,char** argv)
                    else
                        cv::solvePnP(worldPoints,imgPoints,K,cv::Mat(),Rotation_Vec,Translation_Vec,true);
 
-                   cout<<"rotation vector is "<<Rotation_Vec<<endl<<"translation vector is"<<Translation_Vec<<endl;
+                   //cout<<"rotation vector is "<<Rotation_Vec<<endl<<"translation vector is"<<Translation_Vec<<endl;
+                   std::vector<cv::Point2f> projPts;
+                   cv::projectPoints(worldPoints,Rotation_Vec,Translation_Vec,K,cv::Mat(),projPts);
+
+                   float sum=0;
+                   for(int i=0;i<imgPoints.size();i++)
+                   {
+                       sum += (pow(imgPoints[i].x-projPts[i].x,2)+pow(imgPoints[i].y-projPts[i].y,2));
+                   }
+                   sum /= imgPoints.size();
+                   sum = sqrt(sum);
+                   std::cout<<"RMS reproj error is "<<sum<<std::endl;
+                    fin_error += sum;
                    DrawAxis(Rotation_Vec,Translation_Vec,K,cv::Mat(),frame,Axis,w_cap);
+                    //draw(Rotation_Vec,Translation_Vec,K,cv::Mat(),frame,Axis,w_cap);
                }
 
             }

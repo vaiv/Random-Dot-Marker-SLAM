@@ -9,7 +9,7 @@ cv::Mat DetectCircles::filterImage()
 {
     cv::Mat gray;
     cv::cvtColor(inImage,gray,cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(gray,gray,cvSize(9,9),2,2);
+    cv::GaussianBlur(gray,gray,cvSize(5,5),0,0);
     return gray;
 }
 
@@ -36,7 +36,7 @@ DetectCircles::DetectCircles(cv::Mat img)
     vector<cv::Vec4i> hierarchy;
      std::vector< std::vector<cv::Point> > Contours;
     //cv::adaptiveThreshold(binaryMask,binaryMask,127,cv::ADAPTIVE_THRESH_GAUSSIAN_C,cv::THRESH_BINARY,21,2);
-     cv::threshold(binaryMask,binaryMask,100,255,0);
+     cv::threshold(binaryMask,binaryMask,100,255,cv::THRESH_OTSU);
     cv::imshow("binarized",binaryMask);
     cv::waitKey(20);
     cv::findContours(binaryMask,Contours,hierarchy,cv::RETR_CCOMP,cv::CHAIN_APPROX_NONE);
@@ -47,13 +47,13 @@ DetectCircles::DetectCircles(cv::Mat img)
 //            cv::Point2f boxCenter;
 //            boxCenter.x = cv::boundingRect(Contours[j]).x + cv::boundingRect(Contours[j]).width/2;
 //            boxCenter.y = cv::boundingRect(Contours[j]).y + cv::boundingRect(Contours[j]).height/2;
-//             if(distBetween(boxCenter,Center)<10 && cv::boundingRect(Contours[j]).area()<1000 && cv::boundingRect(Contours[j]).area()>100)
+//             if(distBetween(boxCenter,Center)<10 && cv::boundingRect(Contours[j]).area()<1000 && cv::boundingRect(Contours[j]).area()>10)
 //                Elliptical_Contours.push_back(Contours[j]);
             float Pi=3.14159;
             cv::Rect boundingBox = cv::boundingRect(Contours[j]);
             float area = Pi*(boundingBox.width/2)*(boundingBox.height/2);
 
-            if(fabs(cv::contourArea(Contours[j])-area)<100 && cv::boundingRect(Contours[j]).area()>100)
+            if(fabs(cv::contourArea(Contours[j])-area)<100 && cv::boundingRect(Contours[j]).area()>20)
                Elliptical_Contours.push_back(Contours[j]);
         }
 

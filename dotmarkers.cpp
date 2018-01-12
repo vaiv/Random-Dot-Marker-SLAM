@@ -7,12 +7,16 @@ DotMarkers::DotMarkers()
 
 bool DotMarkers::find(Dot& Marker)
 {
+     int count = 0;
     for(int i=0;i<Markers.size();i++)
     {
         Dot curr_Marker = Markers[i];
-        if(curr_Marker.matchDescriptors(Marker.getDescriptors()))
+
+        if(count+=curr_Marker.withinROI(Marker.getCenter()) && curr_Marker.matchDescriptors(Marker.getDescriptors()))
         {
             Marker.setId(curr_Marker.getId());
+            Markers[i].updateMotionModel(Marker);
+            std::cout<<"number of candidates evaluated"<<count<<std::endl;
             return true;
         }
     }
@@ -23,6 +27,7 @@ bool DotMarkers::find(Dot& Marker)
 bool DotMarkers::insert(Dot& Marker)
 {
     Marker.setId(Max_ID);
+    Marker.resetMotionModel();
     Max_ID++;
     Markers.push_back(Marker);
 }
@@ -56,3 +61,28 @@ bool DotMarkers::get3DPos(long id, cv::Point3f &pt)
 
     return false;
 }
+
+//Mat DotMarkers::getAllDescriptors()
+//{
+//    int DescSize;
+//    cv::Mat allDesc(Markers.size(),DescSize,CV_32FC1);
+//    for(int i=0;i<Markers.size();i++)
+//    {
+//         std::vector< std::vector<int> >> Desc = Markers[i].getDescriptors();
+
+//        for(int j=0;j<DescSize;j++)
+//        {
+
+//        }
+//    }
+//}
+
+void DotMarkers::debug()
+{
+    std::vector< std::vector<int> > Desc2 = Markers[1].getDescriptors();
+    std::vector< std::vector<int> > Desc12 = Markers[20].getDescriptors();
+    std::vector< std::vector<int> > Desc20 = Markers[24].getDescriptors();
+    //std::vector< std::vector<int> > Desc27 = Markers[26].getDescriptors();
+
+}
+

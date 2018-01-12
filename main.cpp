@@ -3,6 +3,9 @@
 #include "detectcircles.h"
 #include "dot.h"
 #include "dotmarkers.h"
+#include<chrono>
+typedef std::chrono::high_resolution_clock Clock;
+
 
 using namespace cv;
 using namespace std;
@@ -207,16 +210,16 @@ int main(int argc,char** argv)
         else
         reader.open(argv[1]);
 
-//    cv::Mat K,D; //CameraMatrix and Distortion Coefficients
-//    FileStorage fs(argv[2], cv::FileStorage::READ);
-//    fs["camera_matrix"] >> K;
-//    fs["distortion_coefficients"] >> D;
+    cv::Mat K,D; //CameraMatrix and Distortion Coefficients
+    FileStorage fs(argv[2], cv::FileStorage::READ);
+    fs["camera_matrix"] >> K;
+    fs["distortion_coefficients"] >> D;
 
         ////K for ideal camera
-    cv::Mat K = (Mat_<double>(3,3) <<
-            500, 0, 1280/2,
-            0, 500, 720/2,
-            0, 0,    1);
+//    cv::Mat K = (Mat_<double>(3,3) <<
+//            500, 0, 1280/2,
+//            0, 500, 720/2,
+//            0, 0,    1);
 
     cv::VideoWriter  w_cap("./Augmented.avi",CV_FOURCC('M','J','P','G'),29.0,cvSize((int) reader.get(CV_CAP_PROP_FRAME_WIDTH),(int) reader.get(CV_CAP_PROP_FRAME_HEIGHT)));
 
@@ -232,10 +235,17 @@ int main(int argc,char** argv)
         {
             cv::Mat dist_frame,frame;
             reader.retrieve(dist_frame);
-            cv::undistort(dist_frame,frame,K,cv::Mat());
+            cv::undistort(dist_frame,frame,K,D);
+            //dist_frame.copyTo(frame);
+            ////ellipse detection
+            auto t1 = Clock::now();
             DetectCircles detector(frame);
             detector.drawCircles();
             vector<Vec3f> Circles = detector.getDetectedCircles();
+            auto t2 = Clock::now();
+//            std::cout << "Delta t2-t1: Detection Time:- "
+//                         << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count()
+//                         << " nanoseconds" << std::endl;
             std::vector<Dot> tmp;
             Mat Rotation_Vec,Translation_Vec;
             if(Circles.size()>7)
@@ -243,11 +253,25 @@ int main(int argc,char** argv)
 
                 for(int i=0;i<Circles.size();i++)
                 {
-                    Dot Marker(Circles[i],frame,8,7,1.0f,0.9f,100);
+                    Dot Marker(Circles[i],frame,8,6,0.1f,0.8f,100);
+                    auto t3 = Clock::now();
                     Marker.setCenters(detector.getCenters());
+                    auto t4 = Clock::now();
+//                    std::cout << "Delta t4-t3: NN computation time"
+//                                 << std::chrono::duration_cast<std::chrono::nanoseconds>(t4 - t3).count()
+//                                 << " nanoseconds" << std::endl;
                     Marker.assignDescriptors();
+                    auto t5 =  Clock::now();
+//                    std::cout << "Delta t5-t4: Descriptor Computation time "
+//                                 << std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4).count()
+//                                 << " nanoseconds" << std::endl;
                     if(!Pattern.find(Marker) && !setPattern )
                         Pattern.insert(Marker);
+
+                    auto t6 = Clock::now();
+                    std::cout << "Delta t6-t5: single marker matching time: "
+                                 << std::chrono::duration_cast<std::chrono::nanoseconds>(t6 - t5).count()
+                                 << " nanoseconds" << std::endl;
 
                     if(Marker.getId()>0)
                        {
@@ -256,7 +280,7 @@ int main(int argc,char** argv)
                     }
 
                 }
-                if(Pattern.getMaxId()>=8)
+                if(Pattern.getMaxId()>=25)
                     setPattern=true;
 
                 cv::imshow("Detected Markers",frame);
@@ -426,5 +450,12 @@ int main(int argc,char** argv)
 
             }
         }
+
+        Pattern.debug();
         w_cap.release();
+
+
+//// Clustering of descriptors
+
+
 }

@@ -8,7 +8,7 @@ struct DistComp
 {
     float distance;
     cv::Point2f Center;
-
+    float angle;
     DistComp(float _distance,cv::Point2f _Center)
     {
         distance = _distance;
@@ -33,6 +33,14 @@ struct Comparator
    }
 };
 
+struct angle_Comp
+{
+    bool operator() (DistComp D, DistComp E)
+    {
+        return D.angle > E.angle;
+    }
+};
+
 
 
 class Dot
@@ -52,6 +60,19 @@ class Dot
     std::vector< std::vector<int> > Descriptors;
     cv::Point3f Point_3D;
 
+    ////Non linear Motion model parameters: constant update interval assumption.
+
+    cv::Point2f prev_position;
+    cv::Vec2f prev_velocity;
+    cv::Point2f predicted_position;
+    float roi_radius;
+    cv::Vec2f curr_velocity;
+    cv::Vec2f acc;
+    float pred_error;
+    float prev_pred_error;
+    float pred_error_gradient;
+    float expansion_const;
+
 
 void findNN();
 void computeCOM();
@@ -60,6 +81,9 @@ double getMatch(std::vector<int> candidate);
 float computeCrossRatio(std::vector<cv::Point2f> Vertices);
 float computeCrossRatio_4Points(std::vector<cv::Point2f> Vertices);
 float area(cv::Point2f pt1,cv::Point2f pt2, cv::Point2f pt3);
+
+
+
 
 public:
 
@@ -76,6 +100,10 @@ cv::Point2f getCenter();
 void set3DPos(cv::Point3f pt);
 void get3DPos(cv::Point3f& pt);
 cv::Point3f get3DPos();
+////
+void updateMotionModel(Dot Candidate);
+void resetMotionModel();
+bool withinROI(cv::Point2f Candidate);
 };
 
 #endif // DOT_H

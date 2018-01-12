@@ -18,12 +18,14 @@ public:
 //    bool checkId(long int id);
 //    Dot  findMarkerById(long int id);
 //    cv::Mat scaleToWorld();
+
     DotMarkers();
     long int getMaxId(){return Max_ID;}
     bool find(Dot& Marker);
     bool insert(Dot& Marker);
     bool set3DPos(Dot Marker,cv::Point3f pt);
     bool get3DPos(long id,cv::Point3f& pt);
+    void debug();
 };
 
 #endif // DOTMARKERS_H

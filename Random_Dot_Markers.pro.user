@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.0.2, 2017-12-05T13:13:45. -->
+<!-- Written by QtCreator 4.0.2, 2018-01-11T18:55:06. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -306,7 +306,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/media/vaibhav/DATA/CV_Projects/Random_Dot_Markers/Random_Dot_Markers.pro</value>
     <value type="bool" key="QmakeProjectManager.QmakeRunConfiguration.UseLibrarySearchPath">true</value>
-    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">/home/vaibhav/Videos/debug_dot.avi chameleon.yml &gt; result.txt</value>
+    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">/media/vaibhav/DATA/Beehive/IDS/stars_sparser.avi  IDS_calib.yml&gt;result.txt</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">Random_Dot_Markers.pro</value>
     <value type="bool" key="Qt4ProjectManager.Qt4RunConfiguration.UseDyldImageSuffix">false</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory"></value>

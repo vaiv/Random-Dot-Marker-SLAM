@@ -215,7 +215,7 @@ DetectCircles::DetectCircles(cv::Mat img)
         vector<cv::KeyPoint> keypoints;
         //cv::cvtColor(frame,frame,cv::COLOR_BGR2GRAY);
         //inImage = binaryMask.clone();
-       inImage =  cvScalar(255,255,255) - inImage;
+//       inImage =  cvScalar(255,255,255) - inImage;
                 detector->detect(inImage, keypoints);
      cv::Mat im_with_keypoints;
                        cv::drawKeypoints( inImage, keypoints, im_with_keypoints, cv::Scalar(0,0,255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );

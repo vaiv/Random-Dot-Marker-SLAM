@@ -1,6 +1,7 @@
 #ifndef DOTMARKERS_H
 #define DOTMARKERS_H
 #include "dot.h"
+#include <time.h>
 class DotMarkers
 {
     std::vector<Dot> Markers;

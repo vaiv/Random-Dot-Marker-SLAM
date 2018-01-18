@@ -195,6 +195,11 @@ void getMatches(std::vector<Dot> BF_1, std::vector<Dot> BF_2, std::vector<Dot>& 
     }
 }
 
+bool withinROI(cv::Point2f pt, cv::Mat img)
+{
+    return (pt.x > img.size().width*0.25 && pt.x <img.size().width*0.75 && pt.y > img.size().height*0.25 && pt.y <img.size().height*0.75);
+}
+
 int main(int argc,char** argv)
 {
     string source;
@@ -253,7 +258,7 @@ int main(int argc,char** argv)
 
                 for(int i=0;i<Circles.size();i++)
                 {
-                    Dot Marker(Circles[i],frame,8,6,0.1f,0.8f,100);
+                    Dot Marker(Circles[i],frame,7,6,0.3f,0.8f,100);
                     auto t3 = Clock::now();
                     Marker.setCenters(detector.getCenters());
                     auto t4 = Clock::now();
@@ -265,7 +270,7 @@ int main(int argc,char** argv)
 //                    std::cout << "Delta t5-t4: Descriptor Computation time "
 //                                 << std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4).count()
 //                                 << " nanoseconds" << std::endl;
-                    if(!Pattern.find(Marker) && !setPattern )
+                    if( !Pattern.find(Marker) && !setPattern )
                         Pattern.insert(Marker);
 
                     auto t6 = Clock::now();

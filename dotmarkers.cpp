@@ -12,9 +12,11 @@ bool DotMarkers::find(Dot& Marker)
     {
         Dot curr_Marker = Markers[i];
 
-        if(count+=curr_Marker.withinROI(Marker.getCenter()) && curr_Marker.matchDescriptors(Marker.getDescriptors()))
+        if( curr_Marker.withinROI(Marker.getCenter()) && curr_Marker.matchDescriptors(Marker.getDescriptors()))
         {
             Marker.setId(curr_Marker.getId());
+            srand(time(NULL));
+            if(rand()%10==0)
             Markers[i].updateMotionModel(Marker);
             std::cout<<"number of candidates evaluated"<<count<<std::endl;
             return true;

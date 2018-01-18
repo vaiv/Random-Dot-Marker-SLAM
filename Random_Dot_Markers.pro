@@ -23,10 +23,14 @@ TEMPLATE = app
 SOURCES += main.cpp \
     detectcircles.cpp \
     dot.cpp \
-    dotmarkers.cpp
+    dotmarkers.cpp \
+    keyframe.cpp \
+    posegrabh.cpp
 
 HEADERS += \
     dot.h \
     dotmarkers.h \
     detectcircles.h \
-    posetracker.h
+    posetracker.h \
+    keyframe.h \
+    posegraph.h

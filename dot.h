@@ -63,6 +63,7 @@ class Dot
     ////Non linear Motion model parameters: constant update interval assumption.
 
     cv::Point2f prev_position;
+    cv::Point2f prev_pred_position;
     cv::Vec2f prev_velocity;
     cv::Point2f predicted_position;
     float roi_radius;

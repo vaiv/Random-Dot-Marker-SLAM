@@ -354,13 +354,17 @@ void Dot::updateMotionModel(Dot Candidate)
     //error gradient
     pred_error_gradient = pred_error - prev_pred_error;
 
-    predicted_position.x = curr_velocity[0] + 0.5f*acc[0];
-    predicted_position.y = curr_velocity[1] + 0.5f*acc[1];
+    prev_pred_position = predicted_position;
+    predicted_position.x = predicted_position.x + curr_velocity[0] + 0.5f*acc[0];
+    predicted_position.y = predicted_position.y + curr_velocity[1] + 0.5f*acc[1];
 
-
-    //roi_radius = roi_radius + fabs(expansion_const*pred_error_gradient);
+    if(pred_error!=0)
+    roi_radius = roi_radius + fabs(expansion_const*pred_error_gradient);
+    else
+        roi_radius = 50;
 
     //set params for future
+
 
    prev_pred_error = pred_error;
    prev_position = Candidate.getCenter();
@@ -374,15 +378,15 @@ void Dot::resetMotionModel()
     curr_velocity[1] = prev_velocity[1] = 0;
     pred_error = 100;
     prev_pred_error = pred_error_gradient = 0;
-    roi_radius = 100;
+    roi_radius = 50;
     prev_position.x = predicted_position.x = Circle[0]; //Candidate.x;
     prev_position.y = predicted_position.y = Circle[1]; //Candidate.y;
     acc =0;
-    expansion_const = 10;
+    expansion_const = 2;
 
 }
 
 bool Dot::withinROI(cv::Point2f Candidate)
 {
-    return sqrt(pow(Candidate.x - prev_position.x,2) + pow(Candidate.y - prev_position.y,2)) < roi_radius;
+    return sqrt(pow(Candidate.x - predicted_position.x,2) + pow(Candidate.y - predicted_position.y,2)) < roi_radius;
 }
